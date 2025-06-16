@@ -2,7 +2,7 @@
 
 ## Setup Instructions
 Open the project in VSCode.
-VSCode should automatically set up and install everything you'll need apart from the database connection!
+Run ```dotnet restore``` to automatically set up and install everything you'll need apart from the database connection!
 
 ### Setting up the Database.
 Create 2 new postgres databases - one for the main program and one for our test database.
