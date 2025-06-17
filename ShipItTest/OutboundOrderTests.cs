@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using NuGet.Frameworks;
 using NUnit.Framework;
 using ShipIt.Controllers;
 using ShipIt.Exceptions;
@@ -61,6 +62,7 @@ namespace ShipItTest
 
             var stock = stockRepository.GetStockByWarehouseAndProductIds(WAREHOUSE_ID, new List<int>() { productId })[productId];
             Assert.AreEqual(stock.held, 7);
+
         }
 
         [Test]
@@ -197,6 +199,28 @@ namespace ShipItTest
             {
                 Assert.IsTrue(e.Message.Contains(GTIN));
             }
+        }
+
+        [Test]
+        public void TestOutboundOrderTruckCalculation()
+        {
+            onSetUp();
+            stockRepository.AddStock(WAREHOUSE_ID, new List<StockAlteration>() { new StockAlteration(productId, 300) });
+            var outboundOrder = new OutboundOrderRequestModel()
+            {
+                WarehouseId = WAREHOUSE_ID,
+                OrderLines = new List<OrderLine>()
+                {
+                    new OrderLine()
+                    {
+                        gtin = GTIN,
+                        quantity = 300
+                    }
+                }
+            };
+
+            var actualNoOfTrucks = outboundOrderController.Post(outboundOrder);
+            Assert.AreEqual(actualNoOfTrucks, 45);
         }
     }
 }
