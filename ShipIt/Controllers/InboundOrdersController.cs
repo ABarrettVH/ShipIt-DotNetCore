@@ -1,4 +1,5 @@
 ﻿﻿using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.ExceptionServices;
@@ -29,7 +30,7 @@ namespace ShipIt.Controllers
         }
 
         [HttpGet("{warehouseId}")]
-        // public Dictionary<int, ProductDataModel> Get([FromRoute] int warehouseId)
+        
         public InboundOrderResponse Get([FromRoute] int warehouseId)
 
         {
@@ -51,12 +52,16 @@ namespace ShipIt.Controllers
             int[] productIdsArray = productIds.ToArray(); //1,2,3,4,5
 
             Dictionary<Company, List<InboundOrderLine>> orderlinesByCompany = new Dictionary<Company, List<InboundOrderLine>>();
-
+            
             var products = _productRepository.GetProductsByIds(productIdsArray);
+           
+
             var gcps = new List<string>();
-            foreach (var (key, value) in products)
+            
+            foreach (var product in products)
             {
-                if (!gcps.Contains(value.Gcp)) gcps.Add(value.Gcp);
+                
+                if (!gcps.Contains(product.Gcp)) gcps.Add(product.Gcp);
             }
             var gcpsArray = gcps.ToArray();
 
@@ -64,10 +69,12 @@ namespace ShipIt.Controllers
 
             foreach (var stock in allStock)
             {
-                Product product = new Product(products[stock.ProductId]); // 
+                
+                Product product = new Product(products.FirstOrDefault(product => product.Id == stock.ProductId));
                 if (stock.held < product.LowerThreshold && !product.Discontinued)
                 {
-                    Company company = new Company(companies[product.Gcp]);
+                   
+                    Company company = new Company(companies.FirstOrDefault(company => company.Gcp.Equals(product.Gcp)));
 
                     var orderQuantity = Math.Max(product.LowerThreshold * 3 - stock.held, product.MinimumOrderQuantity);
 

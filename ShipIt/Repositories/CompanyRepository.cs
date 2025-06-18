@@ -6,6 +6,7 @@ using System.Linq;
 using Npgsql;
 using ShipIt.Models.ApiModels;
 using ShipIt.Models.DataModels;
+using ShipIt.Exceptions;
 
 namespace ShipIt.Repositories
 {
@@ -14,7 +15,8 @@ namespace ShipIt.Repositories
         int GetCount();
         CompanyDataModel GetCompany(string gcp);
         void AddCompanies(IEnumerable<Company> companies);
-        Dictionary<string, CompanyDataModel> GetCompanysByGcps(string[] gcps);
+       
+        IEnumerable<CompanyDataModel> GetCompanysByGcps(string[] gcps);
     }
 
     public class CompanyRepository : RepositoryBase, ICompanyRepository
@@ -52,7 +54,7 @@ namespace ShipIt.Repositories
             base.RunTransaction(sql, parametersList);
         }
 
-        public Dictionary<string, CompanyDataModel> GetCompanysByGcps(string[] gcps)
+        public IEnumerable<CompanyDataModel> GetCompanysByGcps(string[] gcps)
         {
             string sql =
                 string.Format("SELECT gcp_cd, gln_nm, gln_addr_02, gln_addr_03, gln_addr_04, gln_addr_postalcode, gln_addr_city, contact_tel, contact_mail " +
@@ -60,8 +62,16 @@ namespace ShipIt.Repositories
                 "WHERE gcp_cd = ANY(@gcp_cd)", String.Join(",", gcps));
             var parameter = new NpgsqlParameter("@gcp_cd", gcps);
             string noCompanyWithGcpErrorMessage = string.Format("No company found with gcp of value {0}", String.Join(",", gcps));
-            var companies = base.RunGetQuery(sql, reader => new CompanyDataModel(reader), noCompanyWithGcpErrorMessage, parameter);
-            return companies.ToDictionary(c => c.Gcp, c => c);
+            try
+            {
+                var companies = base.RunGetQuery(sql, reader => new CompanyDataModel(reader), noCompanyWithGcpErrorMessage, parameter).ToList();
+                return companies;
+            }
+            catch (NoSuchEntityException)
+            {
+                return new List<CompanyDataModel>();
+            }
+  
         }
     }
 
