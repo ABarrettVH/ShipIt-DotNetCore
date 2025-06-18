@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using Npgsql;
+using NpgsqlTypes;
 using ShipIt.Exceptions;
 using ShipIt.Models.DataModels;
 
@@ -16,6 +17,7 @@ namespace ShipIt.Repositories
         ProductDataModel GetProductById(int id);
         void AddProducts(IEnumerable<ProductDataModel> products);
         void DiscontinueProductByGtin(string gtin);
+        Dictionary<int, ProductDataModel> GetProductsByIds(int[] productIds);
     }
 
     public class ProductRepository : RepositoryBase, IProductRepository
@@ -50,6 +52,19 @@ namespace ShipIt.Repositories
             var parameter = new NpgsqlParameter("@p_id", id);
             string noProductWithIdErrorMessage = string.Format("No products found with id of value {0}", id.ToString());
             return RunSingleGetQuery(sql, reader => new ProductDataModel(reader), noProductWithIdErrorMessage, parameter);
+        }
+
+        
+        public  Dictionary<int, ProductDataModel> GetProductsByIds(int[]  productIds)
+        {
+            string sql = string.Format("SELECT p_id, gtin_cd, gcp_cd, gtin_nm, m_g, l_th, ds, min_qt FROM gtin WHERE p_id = ANY(@p_id)",
+            String.Join(",", productIds));
+          
+            var parameter = new NpgsqlParameter("@p_id", productIds);
+            parameter.NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Integer;
+            string noProductWithIdErrorMessage = string.Format("No products found with id of value {0}", String.Join(",", productIds));
+            var products = base.RunGetQuery(sql, reader => new ProductDataModel(reader), noProductWithIdErrorMessage, parameter);
+            return products.ToDictionary(p => p.Id, p => p);
         }
 
         public void DiscontinueProductByGtin(string gtin)

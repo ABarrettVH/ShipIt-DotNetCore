@@ -1,6 +1,7 @@
 ﻿﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using Microsoft.AspNetCore.Mvc;
 using ShipIt.Exceptions;
 using ShipIt.Models.ApiModels;
@@ -28,7 +29,9 @@ namespace ShipIt.Controllers
         }
 
         [HttpGet("{warehouseId}")]
+        // public Dictionary<int, ProductDataModel> Get([FromRoute] int warehouseId)
         public InboundOrderResponse Get([FromRoute] int warehouseId)
+
         {
             Log.Info("orderIn for warehouseId: " + warehouseId);
 
@@ -38,13 +41,33 @@ namespace ShipIt.Controllers
 
             var allStock = _stockRepository.GetStockByWarehouseId(warehouseId);
 
-            Dictionary<Company, List<InboundOrderLine>> orderlinesByCompany = new Dictionary<Company, List<InboundOrderLine>>();
+            var productIds = new List<int>();
+
             foreach (var stock in allStock)
             {
-                Product product = new Product(_productRepository.GetProductById(stock.ProductId));
-                if(stock.held < product.LowerThreshold && !product.Discontinued)
+                productIds.Add(stock.ProductId);
+            }
+
+            int[] productIdsArray = productIds.ToArray(); //1,2,3,4,5
+
+            Dictionary<Company, List<InboundOrderLine>> orderlinesByCompany = new Dictionary<Company, List<InboundOrderLine>>();
+
+            var products = _productRepository.GetProductsByIds(productIdsArray);
+            var gcps = new List<string>();
+            foreach (var (key, value) in products)
+            {
+                if (!gcps.Contains(value.Gcp)) gcps.Add(value.Gcp);
+            }
+            var gcpsArray = gcps.ToArray();
+
+            var companies = _companyRepository.GetCompanysByGcps(gcpsArray);
+
+            foreach (var stock in allStock)
+            {
+                Product product = new Product(products[stock.ProductId]); // 
+                if (stock.held < product.LowerThreshold && !product.Discontinued)
                 {
-                    Company company = new Company(_companyRepository.GetCompany(product.Gcp));
+                    Company company = new Company(companies[product.Gcp]);
 
                     var orderQuantity = Math.Max(product.LowerThreshold * 3 - stock.held, product.MinimumOrderQuantity);
 
@@ -53,7 +76,7 @@ namespace ShipIt.Controllers
                         orderlinesByCompany.Add(company, new List<InboundOrderLine>());
                     }
 
-                    orderlinesByCompany[company].Add( 
+                    orderlinesByCompany[company].Add(
                         new InboundOrderLine()
                         {
                             gtin = product.Gtin,
@@ -62,6 +85,7 @@ namespace ShipIt.Controllers
                         });
                 }
             }
+
 
             Log.Debug(String.Format("Constructed order lines: {0}", orderlinesByCompany));
 
