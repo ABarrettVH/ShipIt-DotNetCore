@@ -48,7 +48,6 @@ namespace ShipItTest
         public void TestCreateOrderNoProductsHeld()
         {
             onSetUp();
-
             var inboundOrder = inboundOrderController.Get(WAREHOUSE_ID);
 
             Assert.AreEqual(inboundOrder.WarehouseId, WAREHOUSE_ID);

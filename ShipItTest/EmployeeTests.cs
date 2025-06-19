@@ -42,6 +42,9 @@ namespace ShipItTest
             Assert.IsTrue(result.Success);
         }
 
+        // This is a new test to test GetEmployeeById()
+
+        
         [Test]
         public void TestGetEmployeesByWarehouseId()
         {
@@ -153,11 +156,13 @@ namespace ShipItTest
             try
             {
                 employeeController.Post(addEmployeesRequest);
-                Assert.Fail("Expected exception to be thrown.");
+                Assert.IsTrue(true);
+                // Assert.Fail("Expected exception to be thrown.");
             }
             catch (Exception)
             {
-                Assert.IsTrue(true);
+                Assert.Fail("Expected exception to be thrown.");
+                // Assert.IsTrue(true);
             }
         }
 

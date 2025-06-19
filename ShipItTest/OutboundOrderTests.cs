@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using NuGet.Frameworks;
 using NUnit.Framework;
 using ShipIt.Controllers;
@@ -57,6 +58,8 @@ namespace ShipItTest
                     }
                 }
             };
+
+            Console.WriteLine(outboundOrder);
 
             outboundOrderController.Post(outboundOrder);
 
