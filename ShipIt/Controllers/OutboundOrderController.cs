@@ -75,6 +75,9 @@ namespace ShipIt.Controllers
                 var lineItem = lineItems[i];
                 var orderLine = orderLines[i];
 
+                Console.WriteLine("Line Item" + lineItem);
+                Console.WriteLine("Order Item" + orderLine);
+
                 if (!stock.ContainsKey(lineItem.ProductId))
                 {
                     errors.Add(string.Format("Product: {0}, no stock held", orderLine.gtin));
@@ -99,7 +102,6 @@ namespace ShipIt.Controllers
 
             var noOfTrucks = (int)Math.Ceiling(totalWeight / 2000);
             // Log.Info(String.Format("This order will take the following number of trucks: {0}", noOfTrucks));
-            Console.WriteLine(noOfTrucks);
             return noOfTrucks;
         }
     }

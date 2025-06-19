@@ -15,7 +15,9 @@ namespace ShipIt.Repositories
         int GetCount();
         int GetWarehouseCount();
         EmployeeDataModel GetEmployeeByName(string name);
-        EmployeeDataModel GetEmployeeById(int id);
+               // EmployeeDataModel GetEmployeeById(int id);
+
+        EmployeeDataModelWithId GetEmployeeById(int id);
         IEnumerable<EmployeeDataModel> GetEmployeesByWarehouseId(int warehouseId);
         EmployeeDataModel GetOperationsManager(int warehouseId);
         void AddEmployees(IEnumerable<Employee> employees);
@@ -79,15 +81,15 @@ namespace ShipIt.Repositories
             string sql = "SELECT name, w_id, role, ext FROM em WHERE name = @name";
             var parameter = new NpgsqlParameter("@name", name);
             string noProductWithIdErrorMessage = string.Format("No employees found with name: {0}", name);
-            return base.RunSingleGetQuery(sql, reader => new EmployeeDataModel(reader),noProductWithIdErrorMessage, parameter);
+            return base.RunSingleGetQuery(sql, reader => new EmployeeDataModel(reader), noProductWithIdErrorMessage, parameter);
         }
 
-         public EmployeeDataModel GetEmployeeById(int id)
+        public EmployeeDataModelWithId GetEmployeeById(int id)
         {
-            string sql = "SELECT name, w_id, role, ext FROM em WHERE id = @id";
+            string sql = "SELECT name, w_id, role, ext, id FROM em WHERE id = @id";
             var parameter = new NpgsqlParameter("@id", id);
-            string noProductWithIdErrorMessage = string.Format("No employees found with id: {0}", id);
-            return base.RunSingleGetQuery(sql, reader => new EmployeeDataModel(reader),noProductWithIdErrorMessage, parameter);
+            string noEmployeeWithIdErrorMessage = string.Format("No employees found with id: {0}", id);
+            return base.RunSingleGetQuery(sql, reader => new EmployeeDataModelWithId(reader), noEmployeeWithIdErrorMessage, parameter);
         }
 
         public IEnumerable<EmployeeDataModel> GetEmployeesByWarehouseId(int warehouseId)
@@ -123,6 +125,20 @@ namespace ShipIt.Repositories
             foreach (var employee in employees)
             {
                 var employeeDataModel = new EmployeeDataModel(employee);
+                parametersList.Add(employeeDataModel.GetNpgsqlParameters().ToArray());
+            }
+
+            base.RunTransaction(sql, parametersList);
+        }
+
+        public void AddEmployeesWithId(IEnumerable<EmployeeWithId> employees)
+        {
+            string sql = "INSERT INTO em (name, w_id, role, ext) VALUES(@name, @w_id, @role, @ext)";
+            
+            var parametersList = new List<NpgsqlParameter[]>();
+            foreach (var employee in employees)
+            {
+                var employeeDataModel = new EmployeeDataModelWithId(employee);
                 parametersList.Add(employeeDataModel.GetNpgsqlParameters().ToArray());
             }
 
