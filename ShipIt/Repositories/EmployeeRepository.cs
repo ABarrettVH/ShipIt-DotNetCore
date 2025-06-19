@@ -134,7 +134,7 @@ namespace ShipIt.Repositories
         public void AddEmployeesWithId(IEnumerable<EmployeeWithId> employees)
         {
             string sql = "INSERT INTO em (name, w_id, role, ext) VALUES(@name, @w_id, @role, @ext)";
-            
+
             var parametersList = new List<NpgsqlParameter[]>();
             foreach (var employee in employees)
             {
