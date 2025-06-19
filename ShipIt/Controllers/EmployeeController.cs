@@ -32,8 +32,21 @@ namespace ShipIt.Controllers
             return new EmployeeResponse(employee);
         }
 
+       //This is a new endpoint that can be used to retrieve employees by id - plan to replace GetEmployeeByName
+        [HttpGet("/getEmployeeByID/{id}")] 
+        public EmployeeResponse GetById([FromRoute] int id)
+        {
+            Log.Info($"Looking up employee by id: {id}");
+
+            var employee = new Employee(_employeeRepository.GetEmployeeById(id));
+
+            Log.Info("Found employee: " + employee);
+            return new EmployeeResponse(employee);
+        }
+
+       
         [HttpGet("{warehouseId}")]
-        public EmployeeResponse Get([FromRoute] int warehouseId)
+        public EmployeeResponse Get([FromRoute] int warehouseId) 
         {
             Log.Info(String.Format("Looking up employee by id: {0}", warehouseId));
 
